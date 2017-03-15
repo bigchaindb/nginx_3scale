@@ -1,6 +1,7 @@
 # Licenses on the Software in This Git Repository
 
-This Git repository can be found at TODO(Insert repo link here)
+This Git repository can be found at
+[https://github.com/bigchaindb/nginx_3scale](https://github.com/bigchaindb/nginx_3scale)
 
 All code in this repository is copyright 2016-2017 BigchainDB GmbH,
 except for the configuration files obtained from 3scale (NGINX configuration
