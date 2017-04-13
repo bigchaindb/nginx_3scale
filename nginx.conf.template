@@ -44,8 +44,15 @@ http {
   # can run a BDB cluster.
   server {
     lua_code_cache on;
-    listen BIGCHAINDB_FRONTEND_PORT;
+    listen BIGCHAINDB_FRONTEND_PORT ssl;
     server_name "FRONTEND_DNS_NAME";
+
+    ssl_certificate        /usr/local/openresty/nginx/conf/ssl/cert.pem;
+    ssl_certificate_key    /usr/local/openresty/nginx/conf/ssl/cert.key;
+    ssl_protocols          TLSv1 TLSv1.1 TLSv1.2;
+    ssl_ciphers            HIGH:!aNULL:!MD5;
+    keepalive_timeout 60s;
+
     underscores_in_headers on;
     set_by_lua $deployment 'return os.getenv("THREESCALE_DEPLOYMENT_ENV")';
     set $threescale_backend "https://su1.3scale.net";
@@ -146,7 +153,7 @@ http {
     client_max_body_size 15k;
 
     # keepalive connection settings
-    keepalive_timeout 20s;
+    keepalive_timeout 60s;
 
     # `slowloris` attack mitigation settings
     client_body_timeout 10s;
@@ -162,8 +169,8 @@ http {
 
     location @proxy_to_app {
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-      # enable this if and only if you use HTTPS
-      # proxy_set_header X-Forwarded-Proto https;
+      # enable the following if and only if you use HTTPS
+      proxy_set_header X-Forwarded-Proto https;
       proxy_set_header Host $http_host;
       
       # we don't want nginx trying to do something clever with
