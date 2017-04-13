@@ -51,6 +51,11 @@ The user tokens map directly to the Application Plan specified in 3Scale.
 * Refer to the references made in the [lua module](./nginx.lua.template) for 
   more details about how nginx+lua+3scale works
 
+* For HTTPS support, we also need to add the signed certificate and the
+  corresponding private key to the folder
+  `/usr/local/openresty/nginx/conf/ssl/`. Name the pem-encoded certificate as
+  `cert.pem` and the private key as `cert.key`.
+
 ## Running nginx_3scale agent
 ```text
 docker run \
