@@ -11,7 +11,7 @@ GOINSTALL=$(GOCMD) install
 GOFMT=gofmt -s -w
 
 DOCKER_IMAGE_NAME?=bigchaindb/nginx_3scale
-DOCKER_IMAGE_TAG?=0.1
+DOCKER_IMAGE_TAG?=1.0
 
 PWD=$(shell pwd)
 BINARY_PATH=$(PWD)/nginx_3scale_wrapper/
