@@ -9,7 +9,7 @@ by users in HTTP headers for authorization.
 The user tokens map directly to the Application Plan specified in 3scale.
 
 ## Building the docker image
-`docker build -t bigchaindb/nginx_3scale:0.1 .` from the root of the project.
+`docker build -t bigchaindb/nginx_3scale:1.0 .` from the root of the project.
 
 ## Working
 
