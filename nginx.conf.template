@@ -16,7 +16,6 @@ http {
   server_names_hash_bucket_size 128;
   lua_package_path ";;$prefix/?.lua;$prefix/conf/?.lua";
   init_by_lua 'math.randomseed(ngx.time()) ; cjson = require("cjson")';
-  resolver 8.8.8.8 8.8.4.4;
   access_log /usr/local/openresty/nginx/logs/nginx.access.log combined buffer=16k flush=5s;
 
   # allow 10 req/sec from the same IP address, and store the counters in a
@@ -24,21 +23,19 @@ http {
   limit_req_zone $binary_remote_addr zone=one:10m rate=10r/s;
   # enable logging when requests are being throttled
   limit_req_log_level notice;
+  
   # the http status code to return to the client; 429 is for TooManyRequests,
   # ref. RFC 6585
   limit_req_status 429;
-
-  upstream backend_SERVICE_ID {
-    server localhost:UPSTREAM_API_PORT max_fails=5 fail_timeout=30;
+  
+  resolver DNS_SERVER valid=30s;
+  
+  map $remote_addr $bdb_backend {
+    default BIGCHAINDB_BACKEND_HOST;
   }
   
-  upstream bdb_server {
-    # Add more BDB server references here if you want to load balance within a
-    # cluster. Forward requests to the server with the least number of
-    # connections. It can be ip_hash based load balancing later in case we
-    # need session persistence.
-    least_conn;
-    server UPSTREAM_BDB_HOST:UPSTREAM_BDB_PORT max_fails=5 fail_timeout=30;
+  upstream backend_SERVICE_ID {
+    server localhost:UPSTREAM_API_PORT max_fails=5 fail_timeout=30;
   }
   
   # Our frontend API server that accepts requests from the external world and
@@ -47,8 +44,15 @@ http {
   # can run a BDB cluster.
   server {
     lua_code_cache on;
-    listen FRONTEND_API_PORT;
+    listen BIGCHAINDB_FRONTEND_PORT ssl;
     server_name "FRONTEND_DNS_NAME";
+
+    ssl_certificate        /usr/local/openresty/nginx/conf/ssl/cert.pem;
+    ssl_certificate_key    /usr/local/openresty/nginx/conf/ssl/cert.key;
+    ssl_protocols          TLSv1 TLSv1.1 TLSv1.2;
+    ssl_ciphers            HIGH:!aNULL:!MD5;
+    keepalive_timeout 60s;
+
     underscores_in_headers on;
     set_by_lua $deployment 'return os.getenv("THREESCALE_DEPLOYMENT_ENV")';
     set $threescale_backend "https://su1.3scale.net";
@@ -71,7 +75,7 @@ http {
     #  #proxy_set_header  Host  "echo-api.3scale.net";
     #
     #  proxy_set_header  X-3scale-User-Agent "nginx$deployment";
-    #  proxy_set_header  X-3scale-Version  "3SCALE_VERSION_HEADER";
+    #  proxy_set_header  X-3scale-Version  "THREESCALE_VERSION_HEADER";
     #}
 
     location = /out_of_band_authrep_action {
@@ -92,7 +96,7 @@ http {
       proxy_set_header  Host  "su1.3scale.net";
       #proxy_set_header  Host  "echo-api.3scale.net";
       proxy_set_header  X-3scale-User-Agent "nginx$deployment";
-      proxy_set_header  X-3scale-Version  "3SCALE_VERSION_HEADER";
+      proxy_set_header  X-3scale-Version  "THREESCALE_VERSION_HEADER";
     }
 
     # 3scale reporting api that takes the metrics data and persists the metrics
@@ -108,7 +112,7 @@ http {
       proxy_pass_request_headers off;
       proxy_set_header  Content-Type "application/x-www-form-urlencoded";
       proxy_set_header  X-3scale-User-Agent "nginx$deployment";
-      proxy_set_header  X-3scale-Version  "3SCALE_VERSION_HEADER";
+      proxy_set_header  X-3scale-Version  "THREESCALE_VERSION_HEADER";
     }
 
     location / {
@@ -128,7 +132,7 @@ http {
       header_filter_by_lua 'ngx.var.resp_headers = cjson.encode(ngx.resp.get_headers())';
       proxy_pass $proxy_pass ;
       proxy_set_header X-Real-IP  $remote_addr;
-      proxy_set_header Host BASE_URL_HOST;
+      proxy_set_header Host FRONTEND_DNS_NAME;
       proxy_set_header X-3scale-proxy-secret-token $secret_token;
       post_action /out_of_band_authrep_action;
 
@@ -138,7 +142,7 @@ http {
       limit_req zone=one burst=20 nodelay;
     }
   }
-    
+  
   # Our backend server block that accepts requests from the nginx proxy and
   # forwards it to instances of BDB cluster. We currently run only a single
   # instance.
@@ -149,29 +153,31 @@ http {
     client_max_body_size 15k;
 
     # keepalive connection settings
-    keepalive_timeout 20s;
+    keepalive_timeout 60s;
 
     # `slowloris` attack mitigation settings
     client_body_timeout 10s;
     client_header_timeout 10s;
     
-    if ( $http_x_3scale_proxy_secret_token != "3SCALE_RESPONSE_SECRET_TOKEN" ) {
+    if ( $http_x_3scale_proxy_secret_token != "THREESCALE_RESPONSE_SECRET_TOKEN" ) {
       return 403;
     }
+
     location / {
       try_files $uri @proxy_to_app;
     }
 
     location @proxy_to_app {
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-      # enable this if and only if you use HTTPS
-      # proxy_set_header X-Forwarded-Proto https;
+      # enable the following line if and only if you use HTTPS
+      proxy_set_header X-Forwarded-Proto https;
       proxy_set_header Host $http_host;
+      
       # we don't want nginx trying to do something clever with
       # redirects, we set the Host: header above already.
       proxy_redirect off;
-      proxy_pass http://bdb_server;
-
+      proxy_pass http://$bdb_backend:BIGCHAINDB_BACKEND_PORT;
+      
       # limit requests from the same client, allow `burst` to 20 r/s on avg,
       # `nodelay` or drop connection immediately in case it exceeds this
       # threshold.
@@ -202,3 +208,45 @@ http {
     }
   }
 }
+
+# NGINX stream block for TCP and UDP proxies
+# TODO(Krish): Uncomment after Openresty adds support for NGINX v1.11.3
+#stream {
+#  log_format mdb_log '[$time_iso8601] $realip_remote_addr $remote_addr '
+#                     '$proxy_protocol_addr $proxy_protocol_port '
+#                     '$protocol $status $session_time $bytes_sent '
+#                     '$bytes_received "$upstream_addr" "$upstream_bytes_sent" '
+#                     '"$upstream_bytes_received" "$upstream_connect_time" ';
+#  
+#  access_log /usr/local/openresty/nginx/logs/nginx.stream.access.log mdb_log buffer=16k flush=5s;
+#  
+#  # define a zone 'two' of size 10 megabytes to store the counters
+#  # that hold number of TCP connections from a specific IP address
+#  limit_conn_zone $binary_remote_addr zone=two:10m;
+#
+#  # enable logging when connections are being throttled
+#  limit_conn_log_level notice;
+#  
+#  resolver DNS_SERVER valid=20s;
+#
+#  map $remote_addr $mdb_backend {
+#    default MONGODB_BACKEND_HOST;
+#  }
+#  
+#  server {
+#    listen MONGODB_FRONTEND_PORT so_keepalive=10m:1m:5;
+#    preread_timeout 30s;
+#    tcp_nodelay on;
+#    
+#    # whitelist
+#    MONGODB_WHITELIST
+#    # deny access to everyone else
+#    deny all;
+#    
+#    # allow 16 connections from the same IP address
+#    limit_conn two 16;
+#    
+#    proxy_pass $mdb_backend:MONGODB_BACKEND_PORT;
+#  }
+#}
+
