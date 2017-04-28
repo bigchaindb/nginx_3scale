@@ -207,6 +207,16 @@ http {
       return 200;
     }
   }
+
+  server {
+    listen 80;
+    server_name "FRONTEND_DNS_NAME";
+    location / {
+        add_header Upgrade "TLS/1.2, HTTP/1.1" always;
+        default_type text/plain;
+        return 426 'Consider using the HTTPS protocol next time!';
+    }
+  }
 }
 
 # NGINX stream block for TCP and UDP proxies
