@@ -44,56 +44,6 @@ local _M = {
   end,
   rules = {
     {
-      method = 'GET',
-      pattern = '/',
-      parameters = {  },
-      querystring_params = function(args)
-        return true
-      end,
-      system_name = 'hits',
-      delta = 1
-    },
-    {
-      method = 'GET',
-      pattern = '/',
-      parameters = {  },
-      querystring_params = function(args)
-        return true
-      end,
-      system_name = 'request_body_size',
-      delta = 1
-    },
-    {
-      method = 'GET',
-      pattern = '/',
-      parameters = {  },
-      querystring_params = function(args)
-        return true
-      end,
-      system_name = 'response_body_size',
-      delta = 1
-    },
-    {
-      method = 'GET',
-      pattern = '/',
-      parameters = {  },
-      querystring_params = function(args)
-        return true
-      end,
-      system_name = 'get_anything',
-      delta = 1
-    },
-    {
-      method = 'GET',
-      pattern = '/',
-      parameters = {  },
-      querystring_params = function(args)
-        return true
-      end,
-      system_name = 'total_body_size',
-      delta = 1
-    },
-    {
       method = 'POST',
       pattern = '/api/{version}/transactions$',
       parameters = { 'version' },
@@ -354,7 +304,6 @@ function _M.access()
     usage, matched_patterns = service:extract_usage(ngx.var.request)
   end
 
-  usage['get_anything'] = 0 
   usage['post_transactions'] = 0 
   usage['request_body_size'] = 0
   usage['total_body_size'] = 0
@@ -393,14 +342,8 @@ end
 function _M.post_action_content()
   local report_data = {}
   -- get or post?
-  if ngx.req.get_method() == "GET" then
-    report_data['get_anything'] = 1
-    report_data['post_transactions'] = 0
-  else
-    if ngx.req.get_method() == "POST" then
-      report_data['get_anything'] = 0
-      report_data['post_transactions'] = 1 
-    end
+  if ngx.req.get_method() == "POST" then
+    report_data['post_transactions'] = 1 
   end
   
   -- NOTE: When we are querying for the length of the request here, we already
@@ -446,8 +389,7 @@ function _M.post_action_content()
   local report = {}
   report['service_id'] = ngx.var.service_id
   report['provider_key'] = ngx.var.provider_key
-  report['transactions[0][app_id]'] = app_id
-  report['transactions[0][usage][get_anything]'] = report_data['get_anything'] 
+  report['transactions[0][app_id]'] = app_id 
   report['transactions[0][usage][post_transactions]'] = report_data['post_transactions']
   report['transactions[0][usage][request_body_size]'] = report_data['request_body_size']
   report['transactions[0][usage][response_body_size]'] = report_data['response_body_size']
