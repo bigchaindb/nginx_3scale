@@ -44,56 +44,6 @@ local _M = {
   end,
   rules = {
     {
-      method = 'GET',
-      pattern = '/',
-      parameters = {  },
-      querystring_params = function(args)
-        return true
-      end,
-      system_name = 'hits',
-      delta = 1
-    },
-    {
-      method = 'GET',
-      pattern = '/',
-      parameters = {  },
-      querystring_params = function(args)
-        return true
-      end,
-      system_name = 'request_body_size',
-      delta = 1
-    },
-    {
-      method = 'GET',
-      pattern = '/',
-      parameters = {  },
-      querystring_params = function(args)
-        return true
-      end,
-      system_name = 'response_body_size',
-      delta = 1
-    },
-    {
-      method = 'GET',
-      pattern = '/',
-      parameters = {  },
-      querystring_params = function(args)
-        return true
-      end,
-      system_name = 'get_anything',
-      delta = 1
-    },
-    {
-      method = 'GET',
-      pattern = '/',
-      parameters = {  },
-      querystring_params = function(args)
-        return true
-      end,
-      system_name = 'total_body_size',
-      delta = 1
-    },
-    {
       method = 'POST',
       pattern = '/api/{version}/transactions$',
       parameters = { 'version' },
