@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
+# Read the env vars for normal configuration
 mongodb_frontend_port=`printenv MONGODB_FRONTEND_PORT`
 mongodb_backend_host=`printenv MONGODB_BACKEND_HOST`
 mongodb_backend_port=`printenv MONGODB_BACKEND_PORT`
@@ -9,15 +10,18 @@ bdb_backend_host=`printenv BIGCHAINDB_BACKEND_HOST`
 bdb_backend_port=`printenv BIGCHAINDB_BACKEND_PORT`
 mongodb_whitelist=`printenv MONGODB_WHITELIST`
 dns_server=`printenv DNS_SERVER`
-
 nginx_health_check_port=`printenv NGINX_HEALTH_CHECK_PORT`
 
-threescale_secret_token=`printenv THREESCALE_SECRET_TOKEN`
-threescale_service_id=`printenv THREESCALE_SERVICE_ID`
-threescale_version_header=`printenv THREESCALE_VERSION_HEADER`
-threescale_provider_key=`printenv THREESCALE_PROVIDER_KEY`
-threescale_frontend_api_dns_name=`printenv THREESCALE_FRONTEND_API_DNS_NAME`
-threescale_upstream_api_port=`printenv THREESCALE_UPSTREAM_API_PORT`
+# Read the 3scale credentials from the mountpoint
+# Should be mounted at the following directory
+THREESCALE_CREDENTIALS_DIR=/usr/local/openresty/nginx/conf/threescale
+
+threescale_secret_token=`cat ${THREESCALE_CREDENTIALS_DIR}/secret-token`
+threescale_service_id=`cat ${THREESCALE_CREDENTIALS_DIR}/service-id`
+threescale_version_header=`cat ${THREESCALE_CREDENTIALS_DIR}/version-header`
+threescale_provider_key=`cat ${THREESCALE_CREDENTIALS_DIR}/provider-key`
+threescale_frontend_api_dns_name=`cat ${THREESCALE_CREDENTIALS_DIR}/frontend-api-dns-name`
+threescale_upstream_api_port=`cat ${THREESCALE_CREDENTIALS_DIR}/upstream-api-port`
 
 # sanity checks TODO(Krish): hardening
 if [[ -z "${mongodb_frontend_port}" || \
