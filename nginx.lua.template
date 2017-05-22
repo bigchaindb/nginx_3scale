@@ -341,10 +341,9 @@ end
 
 function _M.post_action_content()
   local report_data = {}
-  -- get or post?
-  if ngx.req.get_method() == "POST" then
-    report_data['post_transactions'] = 1 
-  end
+
+  -- increment POST count
+  report_data['post_transactions'] = 1 
   
   -- NOTE: When we are querying for the length of the request here, we already
   -- have the complete request data with us and hence can just use the len()
@@ -389,7 +388,7 @@ function _M.post_action_content()
   local report = {}
   report['service_id'] = ngx.var.service_id
   report['provider_key'] = ngx.var.provider_key
-  report['transactions[0][app_id]'] = app_id 
+  report['transactions[0][app_id]'] = app_id
   report['transactions[0][usage][post_transactions]'] = report_data['post_transactions']
   report['transactions[0][usage][request_body_size]'] = report_data['request_body_size']
   report['transactions[0][usage][response_body_size]'] = report_data['response_body_size']
