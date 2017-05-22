@@ -2,7 +2,7 @@ worker_processes 2;
 daemon off;
 user nobody nogroup;
 pid /tmp/nginx.pid;
-error_log /usr/local/openresty/nginx/logs/nginx.error.log;
+error_log /usr/local/openresty/nginx/logs/error.log;
 env THREESCALE_DEPLOYMENT_ENV;
 
 events {
@@ -16,7 +16,7 @@ http {
   server_names_hash_bucket_size 128;
   lua_package_path ";;$prefix/?.lua;$prefix/conf/?.lua";
   init_by_lua 'math.randomseed(ngx.time()) ; cjson = require("cjson")';
-  access_log /usr/local/openresty/nginx/logs/nginx.access.log combined buffer=16k flush=5s;
+  access_log /usr/local/openresty/nginx/logs/access.log combined buffer=16k flush=5s;
 
   # allow 10 req/sec from the same IP address, and store the counters in a
   # `zone` or shared memory location tagged as 'one'.
@@ -235,7 +235,7 @@ http {
 #                     '$bytes_received "$upstream_addr" "$upstream_bytes_sent" '
 #                     '"$upstream_bytes_received" "$upstream_connect_time" ';
 #  
-#  access_log /usr/local/openresty/nginx/logs/nginx.stream.access.log mdb_log buffer=16k flush=5s;
+#  access_log /usr/local/openresty/nginx/logs/access.log mdb_log buffer=16k flush=5s;
 #  
 #  # define a zone 'two' of size 10 megabytes to store the counters
 #  # that hold number of TCP connections from a specific IP address
