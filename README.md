@@ -9,7 +9,7 @@ by users in HTTP headers for authorization.
 The user tokens map directly to the Application Plan specified in 3scale.
 
 ## Building the docker image
-`docker build -t bigchaindb/nginx_3scale:1.1 .` from the root of the project.
+`docker build -t bigchaindb/nginx_3scale:1.4 .` from the root of the project.
 
 ## Working
 
@@ -75,7 +75,7 @@ docker run \
     --restart=always \
     --volume=<host dir where the https-certs are located>:/usr/local/openresty/nginx/conf/ssl/:ro \
     --volume=<host dir where the 3scale credential files are stored>:/usr/local/openresty/nginx/conf/threescale:ro \
-    bigchaindb/nginx_3scale:0.1
+    bigchaindb/nginx_3scale:1.4
 ```
 
 ## TCP Ports
