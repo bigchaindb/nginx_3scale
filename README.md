@@ -9,7 +9,7 @@ by users in HTTP headers for authorization.
 The user tokens map directly to the Application Plan specified in 3scale.
 
 ## Building the docker image
-`docker build -t bigchaindb/nginx_3scale:1.1 .` from the root of the project.
+`docker build -t bigchaindb/nginx_3scale:1.4 .` from the root of the project.
 
 ## Working
 
@@ -59,21 +59,23 @@ The user tokens map directly to the Application Plan specified in 3scale.
 ## Running nginx_3scale agent
 ```text
 docker run \
+    --env "MONGODB_FRONTEND_PORT=<port where nginx listens for MongoDB connections>" \
+    --env "MONGODB_BACKEND_HOST=<ip/hostname of instance where MongoDB is running>" \
+    --env "MONGODB_BACKEND_PORT=<port where MongoDB is listening for connections>" \
+    --env "BIGCHAINDB_FRONTEND_PORT=<port where nginx listens for BigchainDB connections>" \
+    --env "BIGCHAINDB_BACKEND_HOST=<ip/hostname of instance where BigchainDB is running>" \
+    --env "BIGCHAINDB_BACKEND_PORT=<port where BigchainDB is listening for connections>" \
+    --env "BIGCHAINDB_WS_BACKEND_PORT=<port where BigchainDB is listening for websocket connections>" \
+    --env "BIGCHAINDB_WS_FRONTEND_PORT=<port where nginx listens for BigchainDB WebSocket connections>" \
+    --env "MONGODB_WHITELIST=<a ':' separated list of IPs that can connect to MongoDB>" \
+    --env "DNS_SERVER=<ip of the dns server>" \
     --name=nginx_3scale \
-    --publish=8080:8080 \
-    --publish=80:80 \
+    --publish=<port where nginx listens for MongoDB connections as specified above>:<correcponding host port> \
+    --publish=<port where nginx listens for BigchainDB connections as specified above>:<corresponding host port> \
     --restart=always \
-    bigchaindb/nginx_3scale:0.1 \
-    --3scale-secret-token "<secret response token set in 3scale to validate 3scale requests>" \
-    --3scale-service-id "<3scale service id>" \
-    --3scale-version-header "<3scale/nginx version header>" \
-    --frontend-api-dns-name <frontend dns name/ip> \
-    --frontend-api-port <port for our frontend> \
-    --health-check-port <health check port> \
-    --provider-key "<3scale provider key>"
-    --upstream-api-port "proxy port for bdb backend" \
-    --upstream-bdb-host "host for dbd backend" \
-    --upstream-bdb-port "port for bdb backend"
+    --volume=<host dir where the https-certs are located>:/usr/local/openresty/nginx/conf/ssl/:ro \
+    --volume=<host dir where the 3scale credential files are stored>:/usr/local/openresty/nginx/conf/threescale:ro \
+    bigchaindb/nginx_3scale:1.4
 ```
 
 ## TCP Ports
