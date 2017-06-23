@@ -23,21 +23,21 @@ http {
   limit_req_zone $binary_remote_addr zone=one:10m rate=10r/s;
   # enable logging when requests are being throttled
   limit_req_log_level notice;
-  
+
   # the http status code to return to the client; 429 is for TooManyRequests,
   # ref. RFC 6585
   limit_req_status 429;
-  
+
   resolver DNS_SERVER valid=30s ipv6=off;
-  
+
   map $remote_addr $bdb_backend {
     default BIGCHAINDB_BACKEND_HOST;
   }
-  
+
   upstream backend_SERVICE_ID {
     server localhost:UPSTREAM_API_PORT max_fails=5 fail_timeout=30;
   }
-  
+
   # Our frontend API server that accepts requests from the external world and
   # takes care of authentication and authorization. If auth is successful, it
   # forwards the request to the backend_SERVICE_ID upstream where a consortium
@@ -84,8 +84,7 @@ http {
       set $provider_key "PROVIDER_KEY";
       content_by_lua "require('nginx').post_action_content()";
     }
-    
-    
+
     # 3scale auth api that takes the auth credentials and metrics as input,
     # and returns 200 OK if both the credentials match and the user has not
     # exceeded the limits in his application plan.
@@ -98,7 +97,7 @@ http {
       proxy_set_header  X-3scale-User-Agent "nginx$deployment";
       proxy_set_header  X-3scale-Version  "THREESCALE_VERSION_HEADER";
     }
-    
+
     # 3scale reporting api that takes the metrics data and persists the metrics
     # in the 3scale backend.
     location = /threescale_report {
@@ -114,27 +113,22 @@ http {
       proxy_set_header  X-3scale-User-Agent "nginx$deployment";
       proxy_set_header  X-3scale-Version  "THREESCALE_VERSION_HEADER";
     }
-    
+
     location / {
       proxy_ignore_client_abort on;
       proxy_set_header X-Real-IP  $remote_addr;
       proxy_set_header Host FRONTEND_DNS_NAME;
       proxy_set_header X-3scale-proxy-secret-token $secret_token;
-      
+
       # limit requests from the same client, allow `burst` to 20 r/s,
       # `nodelay` or drop connection immediately in case it exceeds this
       # threshold.
       limit_req zone=one burst=20 nodelay;
-      
+
       if ($request_method = GET ) {
-        add_header 'Access-Control-Allow-Origin' '*';
-        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
-        add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Content-Range,Range';
-        add_header 'Access-Control-Expose-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Content-Range,Range';
-        
         proxy_pass http://$bdb_backend:9984;
       }
-      
+
       if ($request_method = POST ) {
         set $provider_key null;
         set $cached_key null;
@@ -149,7 +143,7 @@ http {
         body_filter_by_lua  'ngx.ctx.buffered = (ngx.ctx.buffered or "") .. string.sub(ngx.arg[1], 1, 1000)
                             if ngx.arg[2] then ngx.var.resp_body = ngx.ctx.buffered end';
         header_filter_by_lua 'ngx.var.resp_headers = cjson.encode(ngx.resp.get_headers())';
-        
+
         add_header 'Access-Control-Allow-Origin' '*';
         add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
         add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Content-Range,Range';
@@ -158,7 +152,7 @@ http {
         proxy_pass $proxy_pass ;
         post_action /out_of_band_authrep_action;
       }
-      
+
       if ($request_method = 'OPTIONS') {
         add_header 'Access-Control-Allow-Origin' '*';
         add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
@@ -170,7 +164,7 @@ http {
       }
     }
   }
-  
+
   # Our backend server block that accepts requests from the nginx proxy and
   # forwards it to instances of BDB cluster. We currently run only a single
   # instance.
@@ -179,63 +173,63 @@ http {
     listen UPSTREAM_API_PORT;
     # max client request body size: avg transaction size
     client_max_body_size 15k;
-    
+
     # keepalive connection settings
     keepalive_timeout 60s;
-    
+
     # `slowloris` attack mitigation settings
     client_body_timeout 10s;
     client_header_timeout 10s;
-    
+
     if ( $http_x_3scale_proxy_secret_token != "THREESCALE_RESPONSE_SECRET_TOKEN" ) {
       return 403;
     }
-    
+
     location / {
       try_files $uri @proxy_to_app;
     }
-    
+
     location @proxy_to_app {
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
       # enable the following line if and only if you use HTTPS
       proxy_set_header X-Forwarded-Proto https;
       proxy_set_header Host $http_host;
-      
+
       # we don't want nginx trying to do something clever with
       # redirects, we set the Host: header above already.
       proxy_redirect off;
       proxy_pass http://$bdb_backend:BIGCHAINDB_BACKEND_PORT;
-      
+
       # limit requests from the same client, allow `burst` to 20 r/s on avg,
       # `nodelay` or drop connection immediately in case it exceeds this
       # threshold.
       limit_req zone=one burst=20 nodelay;
     }
-    
+
     error_page 500 502 503 504 /50x.html;
     location = /50x.html {
       root /usr/local/openresty/nginx/html/50x.html;
     }
   }
-  
+
   # health-check for LB
   server {
     listen HEALTH_CHECK_PORT;
-    
+
     # `slowloris` attack mitigation settings
     client_body_timeout 10s;
     client_header_timeout 10s;
-    
+
     location = /health {
       # limit requests from the same client, allow `burst` to 20 r/s on avg,
       # `nodelay` or drop connection immediately in case it exceeds this
       # threshold.
       limit_req zone=one burst=20 nodelay;
-      
+
       return 200;
     }
   }
-  
+
   server {
     listen 80;
     server_name "FRONTEND_DNS_NAME";
