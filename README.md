@@ -8,8 +8,12 @@ It is the entrypoint to the BigchainDB cluster, and validates the tokens sent
 by users in HTTP headers for authorization.
 The user tokens map directly to the Application Plan specified in 3scale.
 
-## Building the docker image
-`docker build -t bigchaindb/nginx_3scale:1.4 .` from the root of the project.
+## Build and Push the Latest Container
+Use the `docker_build_and_push.bash` script to build the latest docker image
+and upload it to Docker Hub.
+Ensure that the image tag is updated to a new version number to properly
+reflect any changes made to the container.
+
 
 ## Working
 
