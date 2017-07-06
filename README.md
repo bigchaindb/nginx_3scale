@@ -71,7 +71,6 @@ docker run \
     --env "BIGCHAINDB_BACKEND_PORT=<port where BigchainDB is listening for connections>" \
     --env "BIGCHAINDB_WS_BACKEND_PORT=<port where BigchainDB is listening for websocket connections>" \
     --env "BIGCHAINDB_WS_FRONTEND_PORT=<port where nginx listens for BigchainDB WebSocket connections>" \
-    --env "MONGODB_WHITELIST=<a ':' separated list of IPs that can connect to MongoDB>" \
     --env "DNS_SERVER=<ip of the dns server>" \
     --name=nginx_3scale \
     --publish=<port where nginx listens for MongoDB connections as specified above>:<correcponding host port> \
