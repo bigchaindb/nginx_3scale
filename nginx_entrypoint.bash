@@ -1,15 +1,16 @@
 #!/bin/bash
 set -euo pipefail
 
-# Read the env vars for normal configuration
-mongodb_frontend_port=`printenv MONGODB_FRONTEND_PORT`
-mongodb_backend_host=`printenv MONGODB_BACKEND_HOST`
-mongodb_backend_port=`printenv MONGODB_BACKEND_PORT`
-bdb_frontend_port=`printenv BIGCHAINDB_FRONTEND_PORT`
-bdb_backend_host=`printenv BIGCHAINDB_BACKEND_HOST`
-bdb_backend_port=`printenv BIGCHAINDB_BACKEND_PORT`
+# Openresty vars
 dns_server=`printenv DNS_SERVER`
-nginx_health_check_port=`printenv NGINX_HEALTH_CHECK_PORT`
+openresty_frontend_port=`printenv OPENRESTY_FRONTEND_PORT`
+local_upstream_api_port=`printenv LOCAL_UPSTREAM_API_PORT`
+
+
+# BigchainDB vars
+bdb_backend_host=`printenv BIGCHAINDB_BACKEND_HOST`
+bdb_api_port=`printenv BIGCHAINDB_API_PORT`
+
 
 # Read the 3scale credentials from the mountpoint
 # Should be mounted at the following directory
@@ -19,24 +20,18 @@ threescale_secret_token=`cat ${THREESCALE_CREDENTIALS_DIR}/secret-token`
 threescale_service_id=`cat ${THREESCALE_CREDENTIALS_DIR}/service-id`
 threescale_version_header=`cat ${THREESCALE_CREDENTIALS_DIR}/version-header`
 threescale_provider_key=`cat ${THREESCALE_CREDENTIALS_DIR}/provider-key`
-threescale_frontend_api_dns_name=`cat ${THREESCALE_CREDENTIALS_DIR}/frontend-api-dns-name`
-threescale_upstream_api_port=`cat ${THREESCALE_CREDENTIALS_DIR}/upstream-api-port`
+
 
 # sanity checks TODO(Krish): hardening
-if [[ -z "${mongodb_frontend_port}" || \
-    -z "${mongodb_backend_host}" || \
-    -z "${mongodb_backend_port}" || \
-    -z "${bdb_frontend_port}" || \
+if [[ -z "${dns_server}" || \
+    -z "${openresty_frontend_port}" || \
+    -z "${local_upstream_api_port}" || \
     -z "${bdb_backend_host}" || \
-    -z "${bdb_backend_port}" || \
-    -z "${dns_server}" || \
-    -z "${nginx_health_check_port}" || \
+    -z "${bdb_api_port}" || \
     -z "${threescale_secret_token}" || \
     -z "${threescale_service_id}" || \
     -z "${threescale_version_header}" || \
-    -z "${threescale_provider_key}" || \
-    -z "${threescale_frontend_api_dns_name}" || \
-    -z "${threescale_upstream_api_port}" ]] ; then
+    -z "${threescale_provider_key}" ]]; then
   echo "Invalid environment settings detected. Exiting!"
   exit 1
 fi
@@ -45,26 +40,23 @@ NGINX_LUA_FILE=/usr/local/openresty/nginx/conf/nginx.lua
 NGINX_CONF_FILE=/usr/local/openresty/nginx/conf/nginx.conf
 
 # configure the nginx.lua file with env variables
-sed -i "s|SERVICE_ID|${threescale_service_id}|g" $NGINX_LUA_FILE
-sed -i "s|THREESCALE_RESPONSE_SECRET_TOKEN|${threescale_secret_token}|g" $NGINX_LUA_FILE
-sed -i "s|PROVIDER_KEY|${threescale_provider_key}|g" $NGINX_LUA_FILE
+sed -i "s|SERVICE_ID|${threescale_service_id}|g" ${NGINX_LUA_FILE}
+sed -i "s|THREESCALE_RESPONSE_SECRET_TOKEN|${threescale_secret_token}|g" ${NGINX_LUA_FILE}
+sed -i "s|PROVIDER_KEY|${threescale_provider_key}|g" ${NGINX_LUA_FILE}
 
 # configure the nginx.conf file with env variables
-sed -i "s|MONGODB_FRONTEND_PORT|${mongodb_frontend_port}|g" $NGINX_CONF_FILE
-sed -i "s|MONGODB_BACKEND_HOST|${mongodb_backend_host}|g" $NGINX_CONF_FILE
-sed -i "s|MONGODB_BACKEND_PORT|${mongodb_backend_port}|g" $NGINX_CONF_FILE
-sed -i "s|BIGCHAINDB_FRONTEND_PORT|${bdb_frontend_port}|g" $NGINX_CONF_FILE
-sed -i "s|BIGCHAINDB_BACKEND_HOST|${bdb_backend_host}|g" $NGINX_CONF_FILE
-sed -i "s|BIGCHAINDB_BACKEND_PORT|${bdb_backend_port}|g" $NGINX_CONF_FILE
-sed -i "s|DNS_SERVER|${dns_server}|g" $NGINX_CONF_FILE
-sed -i "s|UPSTREAM_API_PORT|${threescale_upstream_api_port}|g" $NGINX_CONF_FILE
-sed -i "s|SERVICE_ID|${threescale_service_id}|g" $NGINX_CONF_FILE
-sed -i "s|FRONTEND_DNS_NAME|${threescale_frontend_api_dns_name}|g" $NGINX_CONF_FILE
-sed -i "s|PROVIDER_KEY|${threescale_provider_key}|g" $NGINX_CONF_FILE
-sed -i "s|THREESCALE_VERSION_HEADER|${threescale_version_header}|g" $NGINX_CONF_FILE
-sed -i "s|HEALTH_CHECK_PORT|${nginx_health_check_port}|g" $NGINX_CONF_FILE
+sed -i "s|DNS_SERVER|${dns_server}|g" ${NGINX_CONF_FILE}
+sed -i "s|OPENRESTY_FRONTEND_PORT|${openresty_frontend_port}|g" ${NGINX_CONF_FILE}
+sed -i "s|LOCAL_UPSTREAM_API_PORT|${local_upstream_api_por}|g" ${NGINX_CONF_FILE}
+sed -i "s|BIGCHAINDB_BACKEND_HOST|${bdb_backend_host}|g" ${NGINX_CONF_FILE}
+sed -i "s|BIGCHAINDB_API_PORT|${bdb_api_port}|g" ${NGINX_CONF_FILE}
 sed -i "s|THREESCALE_RESPONSE_SECRET_TOKEN|${threescale_secret_token}|g" $NGINX_CONF_FILE
+sed -i "s|SERVICE_ID|${threescale_service_id}|g" $NGINX_CONF_FILE
+sed -i "s|THREESCALE_VERSION_HEADER|${threescale_version_header}|g" $NGINX_CONF_FILE
+sed -i "s|PROVIDER_KEY|${threescale_provider_key}|g" $NGINX_CONF_FILE
+
 
 # start nginx
 echo "INFO: starting nginx..."
 exec /usr/local/openresty/nginx/sbin/nginx -c ${NGINX_CONF_FILE}
+

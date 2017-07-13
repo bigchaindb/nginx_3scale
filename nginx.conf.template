@@ -35,7 +35,7 @@ http {
   }
 
   upstream backend_SERVICE_ID {
-    server localhost:UPSTREAM_API_PORT max_fails=5 fail_timeout=30;
+    server localhost:LOCAL_UPSTREAM_API_PORT max_fails=5 fail_timeout=30;
   }
 
   # Our frontend API server that accepts requests from the external world and
@@ -44,7 +44,7 @@ http {
   # can run a BDB cluster.
   server {
     lua_code_cache on;
-    listen BIGCHAINDB_FRONTEND_PORT;
+    listen OPENRESTY_FRONTEND_PORT;
     keepalive_timeout 60s;
 
     underscores_in_headers on;
@@ -97,7 +97,6 @@ http {
     location / {
       proxy_ignore_client_abort on;
       proxy_set_header X-Real-IP  $remote_addr;
-      proxy_set_header Host FRONTEND_DNS_NAME;
       proxy_set_header X-3scale-proxy-secret-token $secret_token;
 
       # limit requests from the same client, allow `burst` to 20 r/s,
@@ -108,7 +107,7 @@ http {
       # We do not need the GET handling here as it's done in the other NGINX
       # module
       #if ($request_method = GET ) {
-      #  proxy_pass http://$bdb_backend:BIGCHAINDB_BACKEND_PORT;
+      #  proxy_pass http://$bdb_backend:BIGCHAINDB_API_PORT;
       #}
 
       if ($request_method = POST ) {
@@ -153,7 +152,7 @@ http {
   server {
     sendfile on;
 
-    listen UPSTREAM_API_PORT;
+    listen LOCAL_UPSTREAM_API_PORT;
 
     # max client request body size: avg transaction size
     client_max_body_size 15k;
@@ -182,7 +181,7 @@ http {
       # we don't want nginx trying to do something clever with
       # redirects, we set the Host: header above already.
       proxy_redirect off;
-      proxy_pass http://$bdb_backend:BIGCHAINDB_BACKEND_PORT;
+      proxy_pass http://$bdb_backend:BIGCHAINDB_API_PORT;
 
       # limit requests from the same client, allow `burst` to 20 r/s on avg,
       # `nodelay` or drop connection immediately in case it exceeds this
