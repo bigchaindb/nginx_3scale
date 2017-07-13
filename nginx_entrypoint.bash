@@ -4,7 +4,6 @@ set -euo pipefail
 # Openresty vars
 dns_server=`printenv DNS_SERVER`
 openresty_frontend_port=`printenv OPENRESTY_FRONTEND_PORT`
-local_upstream_api_port=`printenv LOCAL_UPSTREAM_API_PORT`
 
 
 # BigchainDB vars
@@ -25,7 +24,6 @@ threescale_provider_key=`cat ${THREESCALE_CREDENTIALS_DIR}/provider-key`
 # sanity checks TODO(Krish): hardening
 if [[ -z "${dns_server}" || \
     -z "${openresty_frontend_port}" || \
-    -z "${local_upstream_api_port}" || \
     -z "${bdb_backend_host}" || \
     -z "${bdb_api_port}" || \
     -z "${threescale_secret_token}" || \
@@ -47,7 +45,6 @@ sed -i "s|PROVIDER_KEY|${threescale_provider_key}|g" ${NGINX_LUA_FILE}
 # configure the nginx.conf file with env variables
 sed -i "s|DNS_SERVER|${dns_server}|g" ${NGINX_CONF_FILE}
 sed -i "s|OPENRESTY_FRONTEND_PORT|${openresty_frontend_port}|g" ${NGINX_CONF_FILE}
-sed -i "s|LOCAL_UPSTREAM_API_PORT|${local_upstream_api_por}|g" ${NGINX_CONF_FILE}
 sed -i "s|BIGCHAINDB_BACKEND_HOST|${bdb_backend_host}|g" ${NGINX_CONF_FILE}
 sed -i "s|BIGCHAINDB_API_PORT|${bdb_api_port}|g" ${NGINX_CONF_FILE}
 sed -i "s|THREESCALE_RESPONSE_SECRET_TOKEN|${threescale_secret_token}|g" $NGINX_CONF_FILE

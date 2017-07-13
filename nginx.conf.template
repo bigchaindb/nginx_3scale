@@ -35,7 +35,7 @@ http {
   }
 
   upstream backend_SERVICE_ID {
-    server localhost:LOCAL_UPSTREAM_API_PORT max_fails=5 fail_timeout=30;
+    server localhost:9999 max_fails=5 fail_timeout=30;
   }
 
   # Our frontend API server that accepts requests from the external world and
@@ -152,7 +152,7 @@ http {
   server {
     sendfile on;
 
-    listen LOCAL_UPSTREAM_API_PORT;
+    listen 9999;
 
     # max client request body size: avg transaction size
     client_max_body_size 15k;
