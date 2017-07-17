@@ -4,8 +4,7 @@ authorization and metering of BigchainDB API users, by communicating with 3scale
 We use the openresty for this, which is nginx bundled with lua libraries.
 More information at their [website](openresty.org/en)
 
-It is the entrypoint to the BigchainDB cluster, and validates the tokens sent 
-by users in HTTP headers for authorization.
+It validates the tokens sent by users in HTTP headers.
 The user tokens map directly to the Application Plan specified in 3scale.
 
 ## Build and Push the Latest Container
@@ -60,62 +59,13 @@ reflect any changes made to the container.
   `/usr/local/openresty/nginx/conf/ssl/`. Name the pem-encoded certificate as
   `cert.pem` and the private key as `cert.key`.
 
-## Running nginx_3scale agent
-```text
-docker run \
-    --env "MONGODB_FRONTEND_PORT=<port where nginx listens for MongoDB connections>" \
-    --env "MONGODB_BACKEND_HOST=<ip/hostname of instance where MongoDB is running>" \
-    --env "MONGODB_BACKEND_PORT=<port where MongoDB is listening for connections>" \
-    --env "BIGCHAINDB_FRONTEND_PORT=<port where nginx listens for BigchainDB connections>" \
-    --env "BIGCHAINDB_BACKEND_HOST=<ip/hostname of instance where BigchainDB is running>" \
-    --env "BIGCHAINDB_BACKEND_PORT=<port where BigchainDB is listening for connections>" \
-    --env "BIGCHAINDB_WS_BACKEND_PORT=<port where BigchainDB is listening for websocket connections>" \
-    --env "BIGCHAINDB_WS_FRONTEND_PORT=<port where nginx listens for BigchainDB WebSocket connections>" \
-    --env "DNS_SERVER=<ip of the dns server>" \
-    --name=nginx_3scale \
-    --publish=<port where nginx listens for MongoDB connections as specified above>:<correcponding host port> \
-    --publish=<port where nginx listens for BigchainDB connections as specified above>:<corresponding host port> \
-    --restart=always \
-    --volume=<host dir where the https-certs are located>:/usr/local/openresty/nginx/conf/ssl/:ro \
-    --volume=<host dir where the 3scale credential files are stored>:/usr/local/openresty/nginx/conf/threescale:ro \
-    bigchaindb/nginx_3scale:1.4
-```
-
-## TCP Ports
-Currently binds to all interfaces at ports `health-check-port`, 
-`upstream-api-port` and `bigchaindb-frontend-port`.
 
 ## Deployment terminology
 We currently use the terms `frontend`, `backend`, `upstream` in our code and
 configuration. This diagram should help understand the various terms.
-```
-                              +------------+                                                   +----------+
-                              |            |                                                   |          |
-+-----------------------------+----+    N  |                             +---------------------+------+   |
-|      Frontend API Port           |    G  |                             |     Upstream  DB Port      |   |
-|                                  |    I  |                             |                            |   |
-|[port number exposed globally     |    N  |                  +--------> |[port where BDB instance    |   |
-| for backend BDB cluster services]|    X  |                  |          | listens/waits for requests]|   |
-+-----------------------------+----+       |                  |          +---------------------+------+   |
-                              |         G  |                  |                                |          |
-                              |         A  |                  |                                | Upstream |
-                              |         T  |                  |                                | BDB Host |
-+-----------------------------+----+    E  |                  |                                +----------+
-|       Health Check Port          |    W  |                  |
-|                                  |    A  |                  |
-|  [port number exposed to the LB  |    Y  |                  |
-|   for health checks]             |       |                  |
-+-----------------------------+----+       |                  |
-                              |       +----+------------------+----------+
-                              |       |     Upstream API Port            |
-                              |       |                                  |
-                              |       |[internal port where we can       |
-                              |       |access backend BDB cluster service|
-                              |       +----------------------------------+
-                              +------------+
-```
 
 The final goal is to have a deployment that looks like this:
+
 ```
                               +------------+                                                   +------------+
                               |            |                                                   |            |
