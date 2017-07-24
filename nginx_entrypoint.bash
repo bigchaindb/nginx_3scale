@@ -18,7 +18,7 @@ THREESCALE_CREDENTIALS_DIR=/usr/local/openresty/nginx/conf/threescale
 threescale_secret_token=`cat ${THREESCALE_CREDENTIALS_DIR}/secret-token`
 threescale_service_id=`cat ${THREESCALE_CREDENTIALS_DIR}/service-id`
 threescale_version_header=`cat ${THREESCALE_CREDENTIALS_DIR}/version-header`
-threescale_provider_key=`cat ${THREESCALE_CREDENTIALS_DIR}/provider-key`
+threescale_service_token=`cat ${THREESCALE_CREDENTIALS_DIR}/service-token`
 
 
 # sanity checks TODO(Krish): hardening
@@ -29,7 +29,7 @@ if [[ -z "${dns_server}" || \
     -z "${threescale_secret_token}" || \
     -z "${threescale_service_id}" || \
     -z "${threescale_version_header}" || \
-    -z "${threescale_provider_key}" ]]; then
+    -z "${threescale_service_token}" ]]; then
   echo "Invalid environment settings detected. Exiting!"
   exit 1
 fi
@@ -40,7 +40,7 @@ NGINX_CONF_FILE=/usr/local/openresty/nginx/conf/nginx.conf
 # configure the nginx.lua file with env variables
 sed -i "s|SERVICE_ID|${threescale_service_id}|g" ${NGINX_LUA_FILE}
 sed -i "s|THREESCALE_RESPONSE_SECRET_TOKEN|${threescale_secret_token}|g" ${NGINX_LUA_FILE}
-sed -i "s|PROVIDER_KEY|${threescale_provider_key}|g" ${NGINX_LUA_FILE}
+sed -i "s|SERVICE_TOKEN|${threescale_service_token}|g" ${NGINX_LUA_FILE}
 
 # configure the nginx.conf file with env variables
 sed -i "s|DNS_SERVER|${dns_server}|g" ${NGINX_CONF_FILE}
@@ -50,7 +50,7 @@ sed -i "s|BIGCHAINDB_API_PORT|${bdb_api_port}|g" ${NGINX_CONF_FILE}
 sed -i "s|THREESCALE_RESPONSE_SECRET_TOKEN|${threescale_secret_token}|g" $NGINX_CONF_FILE
 sed -i "s|SERVICE_ID|${threescale_service_id}|g" $NGINX_CONF_FILE
 sed -i "s|THREESCALE_VERSION_HEADER|${threescale_version_header}|g" $NGINX_CONF_FILE
-sed -i "s|PROVIDER_KEY|${threescale_provider_key}|g" $NGINX_CONF_FILE
+sed -i "s|SERVICE_TOKEN|${threescale_service_token}|g" $NGINX_CONF_FILE
 
 
 # start nginx

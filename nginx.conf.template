@@ -61,7 +61,7 @@ http {
     location = /out_of_band_authrep_action {
       internal;
       proxy_pass_request_headers off;
-      set $provider_key "PROVIDER_KEY";
+      set $service_token "SERVICE_TOKEN";
       content_by_lua "require('nginx').post_action_content()";
     }
 
@@ -70,8 +70,8 @@ http {
     # exceeded the limits in his application plan.
     location = /threescale_auth {
       internal;
-      set $provider_key "PROVIDER_KEY";
-      proxy_pass $threescale_backend/transactions/authorize.xml?provider_key=$provider_key&service_id=$service_id&$usage&$credentials&log%5Bcode%5D=$arg_code&log%5Brequest%5D=$arg_req&log%5Bresponse%5D=$arg_resp;
+      set $service_token "SERVICE_TOKEN";
+      proxy_pass $threescale_backend/transactions/authorize.xml?service_token=$service_token&service_id=$service_id&$usage&$credentials&log%5Bcode%5D=$arg_code&log%5Brequest%5D=$arg_req&log%5Bresponse%5D=$arg_resp;
       proxy_set_header  Host  "su1.3scale.net";
       #proxy_set_header  Host  "echo-api.3scale.net";
       proxy_set_header  X-3scale-User-Agent "nginx$deployment";
@@ -82,7 +82,7 @@ http {
     # in the 3scale backend.
     location = /threescale_report {
       internal;
-      set $provider_key "PROVIDER_KEY";
+      set $service_token "SERVICE_TOKEN";
       proxy_pass $threescale_backend/transactions.xml;
       proxy_set_header  Host  "su1.3scale.net";
       #proxy_set_header  Host  "echo-api.3scale.net";
@@ -111,7 +111,7 @@ http {
       #}
 
       if ($request_method = POST ) {
-        set $provider_key null;
+        set $service_token null;
         set $cached_key null;
         set $credentials null;
         set $usage null;
