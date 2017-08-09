@@ -216,7 +216,7 @@ end
 
 function get_debug_value()
   local h = ngx.req.get_headers()
-  if h["X-3scale-debug"] == 'PROVIDER_KEY' then
+  if h["X-3scale-debug"] == 'SERVICE_TOKEN' then
     return true
   else
     return false
@@ -387,7 +387,7 @@ function _M.post_action_content()
   -- form the payload to report to 3scale
   local report = {}
   report['service_id'] = ngx.var.service_id
-  report['provider_key'] = ngx.var.provider_key
+  report['service_token'] = ngx.var.service_token
   report['transactions[0][app_id]'] = app_id
   report['transactions[0][usage][post_transactions]'] = report_data['post_transactions']
   report['transactions[0][usage][request_body_size]'] = report_data['request_body_size']
