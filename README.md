@@ -1,3 +1,13 @@
+# WARNING
+
+This repository is no longer being used.
+Its contents were moved to bigchaindb/bigchaindb
+and it's just being kept around for historical interest.
+To understand why the move was done, and more,
+see issue [bigchaindb/bigchaindb#1588](https://github.com/bigchaindb/bigchaindb/issues/1588).
+
+---
+
 # nginx_3scale agent
 nginx_3scale agent is a module that is responsible for providing authentication,
 authorization and metering of BigchainDB API users, by communicating with 3scale.
